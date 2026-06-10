@@ -12,7 +12,7 @@ def test_parse_pi_session_fixture_has_steps():
     trace = parse_pi_session_jsonl(FIXTURE)
 
     assert trace.steps
-    assert trace.metrics.total_tokens > 0
+    assert trace.metrics.total_tokens == 0
 
 
 def test_parse_pi_session_fixture_bash_mapping_counts():

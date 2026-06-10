@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -131,7 +132,7 @@ def test_pi_adapter_falls_back_to_black_box_when_session_parse_fails(tmp_path):
             },
             "commands": [
                 {
-                    "cmd": f"{sys.executable} -c \"from pathlib import Path; assert Path('app.py').read_text() == 'fixed\\n'\"",
+                    "cmd": f"{shlex.quote(sys.executable)} -c \"from pathlib import Path; assert Path('app.py').read_text() == 'fixed\\n'\"",
                     "cwd": ".",
                     "timeout_s": 30,
                     "must_pass": True,
