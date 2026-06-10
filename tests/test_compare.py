@@ -107,6 +107,36 @@ def test_compare_returns_zero_when_candidate_does_not_regress(tmp_path):
     assert exit_code == 0
 
 
+def test_compare_reports_candidate_only_failed_cases(tmp_path):
+    baseline_path = _write_results(
+        tmp_path / "baseline.eval_results.jsonl",
+        [_result("old_pass", passed=True, aggregate_score=1.0)],
+    )
+    candidate_path = _write_results(
+        tmp_path / "candidate.eval_results.jsonl",
+        [
+            _result("old_pass", passed=True, aggregate_score=1.0),
+            _result("new_fail", passed=False, aggregate_score=0.0),
+        ],
+    )
+
+    summary = compare_runs(
+        CompareOptions(
+            baseline_path=baseline_path,
+            candidate_path=candidate_path,
+            out_dir=tmp_path / "compare_candidate_only",
+            gates_path=None,
+        )
+    )
+
+    assert [case.case_id for case in summary.new_failures] == ["new_fail"]
+    assert summary.new_failures[0].baseline_failure_type == "missing"
+    markdown = (tmp_path / "compare_candidate_only" / "compare_report.md").read_text(
+        encoding="utf-8"
+    )
+    assert "new_fail" in markdown
+
+
 def _write_cases(path: Path, *, script: str) -> Path:
     rows = [
         {
@@ -143,3 +173,34 @@ def _write_cases(path: Path, *, script: str) -> Path:
         encoding="utf-8",
     )
     return path
+
+
+def _write_results(path: Path, rows: list[dict]) -> Path:
+    path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _result(case_id: str, *, passed: bool, aggregate_score: float) -> dict:
+    failure_type = "" if passed else "task_failure"
+    reason = "" if passed else "candidate-only case failed"
+    return {
+        "case_id": case_id,
+        "pass": passed,
+        "aggregate_score": aggregate_score,
+        "scores": {
+            "task_success": aggregate_score,
+            "tool_call_accuracy": 1.0,
+            "final_answer_correctness": aggregate_score,
+            "safety": 1.0,
+        },
+        "failure_type": failure_type,
+        "reason": reason,
+        "trace_path": f"{case_id}.trace.json",
+        "latency_ms": 0,
+        "cost_usd": 0.0,
+        "tags": [],
+        "score_results": [],
+    }

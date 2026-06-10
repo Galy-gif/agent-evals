@@ -280,8 +280,23 @@ def _append_observation(trace: Trace, kind: str, summary: str, payload: dict[str
 def _run_expected_commands(commands: Sequence[ExpectedCommand], workspace: Path) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for command in commands:
-        cwd = workspace / command.cwd
         started = time.monotonic()
+        cwd, cwd_error = _resolve_command_cwd(workspace, command.cwd)
+        if cwd_error is not None:
+            results.append(
+                {
+                    "cmd": command.cmd,
+                    "cwd": command.cwd,
+                    "timeout_s": command.timeout_s,
+                    "must_pass": command.must_pass,
+                    "exit_code": 126,
+                    "stdout": "",
+                    "stderr": cwd_error,
+                    "latency_ms": int((time.monotonic() - started) * 1000),
+                    "timed_out": False,
+                }
+            )
+            continue
         try:
             completed = subprocess.run(
                 command.cmd,
@@ -322,6 +337,21 @@ def _run_expected_commands(commands: Sequence[ExpectedCommand], workspace: Path)
                 }
             )
     return results
+
+
+def _resolve_command_cwd(workspace: Path, cwd: str) -> tuple[Path | None, str | None]:
+    workspace_root = workspace.resolve()
+    configured = Path(cwd)
+    candidate = configured if configured.is_absolute() else workspace_root / configured
+    try:
+        resolved = candidate.resolve()
+    except OSError as exc:
+        return None, f"invalid command cwd {cwd!r}: {exc}"
+    try:
+        resolved.relative_to(workspace_root)
+    except ValueError:
+        return None, f"command cwd escapes workspace: {cwd!r}"
+    return resolved, None
 
 
 def _git_state(workspace: Path) -> dict[str, Any]:
@@ -422,5 +452,5 @@ def _pi_config(case: EvalCase) -> dict[str, Any]:
 
 
 def _copy_ignore(directory: str, names: list[str]) -> set[str]:
-    ignored = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+    ignored = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
     return {name for name in names if name in ignored}

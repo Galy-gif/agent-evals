@@ -125,6 +125,11 @@ def _compare(
         for case_id in common_ids
         if baseline_by_id[case_id].passed and not candidate_by_id[case_id].passed
     ]
+    new_failures.extend(
+        _candidate_only_failure(candidate_by_id[case_id])
+        for case_id in sorted(set(candidate_by_id) - set(baseline_by_id))
+        if not candidate_by_id[case_id].passed
+    )
     fixed_cases = [
         _case_change(baseline_by_id[case_id], candidate_by_id[case_id])
         for case_id in common_ids
@@ -194,6 +199,17 @@ def _case_change(baseline: CaseRunRecord, candidate: CaseRunRecord) -> CaseChang
         baseline_failure_type=baseline.failure_type,
         candidate_failure_type=candidate.failure_type,
         baseline_score=baseline.aggregate_score,
+        candidate_score=candidate.aggregate_score,
+        candidate_reason=candidate.reason,
+    )
+
+
+def _candidate_only_failure(candidate: CaseRunRecord) -> CaseChange:
+    return CaseChange(
+        case_id=candidate.case_id,
+        baseline_failure_type="missing",
+        candidate_failure_type=candidate.failure_type,
+        baseline_score=0.0,
         candidate_score=candidate.aggregate_score,
         candidate_reason=candidate.reason,
     )

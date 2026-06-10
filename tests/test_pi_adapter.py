@@ -10,11 +10,13 @@ from agent_evals.adapters.pi import (
     PI_SESSION_KIND,
     PI_WORKSPACE_KIND,
     PiAgentAdapter,
+    _git_state,
+    _run_expected_commands,
     discover_pi_session,
     prepare_workspace,
 )
 from agent_evals.scorers import CommandPassScorer, ScoringContext, WorkspaceDiffScorer
-from agent_evals.traces.schema import EvalCase
+from agent_evals.traces.schema import EvalCase, ExpectedCommand
 
 
 def test_prepare_workspace_copies_source_and_initializes_git_baseline(tmp_path):
@@ -29,6 +31,66 @@ def test_prepare_workspace_copies_source_and_initializes_git_baseline(tmp_path):
     assert (workspace / "app.py").read_text(encoding="utf-8") == "value = 1\n"
     assert (workspace / ".git").exists()
     assert not (source / ".git").exists()
+
+
+def test_prepare_workspace_ignores_source_git_metadata_and_dirty_state(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    subprocess.run(["git", "init"], cwd=source, capture_output=True, text=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "agent-evals-test"],
+        cwd=source,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "agent-evals-test@example.invalid"],
+        cwd=source,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    (source / "tracked.py").write_text("clean\n", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.py"], cwd=source, capture_output=True, text=True, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "clean baseline"],
+        cwd=source,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    (source / "tracked.py").write_text("dirty\n", encoding="utf-8")
+
+    workspace = prepare_workspace(_case(source), run_id="run_dirty", base_work_dir=tmp_path / "runs")
+
+    assert (workspace / ".git").exists()
+    assert (workspace / "tracked.py").read_text(encoding="utf-8") == "dirty\n"
+    assert _git_state(workspace)["changed_files"] == []
+
+
+def test_expected_command_cwd_cannot_escape_workspace(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "marker.txt").write_text("secret\n", encoding="utf-8")
+
+    results = _run_expected_commands(
+        [
+            ExpectedCommand(
+                cmd="pwd && test -f marker.txt",
+                cwd=str(outside),
+                timeout_s=5,
+                must_pass=True,
+            )
+        ],
+        workspace,
+    )
+
+    assert results[0]["exit_code"] != 0
+    assert str(outside) not in results[0]["stdout"]
+    assert "escapes workspace" in results[0]["stderr"]
 
 
 def test_discover_pi_session_supports_explicit_and_session_dir_latest(tmp_path):
