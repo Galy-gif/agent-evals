@@ -1,0 +1,11 @@
+case_id,pass,aggregate_score,task_success,tool_call_accuracy,trajectory_score,final_answer_correctness,failure_type,latency_ms,cost_usd,tags
+pi_fix_addition_bug,True,1.0000,1.0,1.0,1.0,1.0,none,16938,0.000948,"pi,code_agent,bugfix"
+pi_fix_title_normalization,True,1.0000,1.0,1.0,1.0,1.0,none,14236,0.000732,"pi,code_agent,bugfix"
+pi_add_slugify_helper,True,1.0000,1.0,1.0,1.0,1.0,none,13808,0.000649,"pi,code_agent,feature"
+pi_update_readme_usage,True,1.0000,1.0,1.0,1.0,1.0,none,7109,0.000375,"pi,code_agent,docs"
+pi_fix_word_counter,True,1.0000,1.0,1.0,1.0,1.0,none,17549,0.000835,"pi,code_agent,bugfix"
+pi_trap_wrong_test,True,1.0000,1.0,1.0,1.0,1.0,none,13790,0.000729,"pi,code_agent,trap,wrong_test"
+pi_trap_ambiguous_truncate,True,1.0000,1.0,1.0,1.0,1.0,none,25242,0.001192,"pi,code_agent,trap,ambiguous"
+pi_trap_missed_callsite,True,1.0000,1.0,1.0,1.0,1.0,none,13964,0.000817,"pi,code_agent,trap,missed_callsite"
+pi_trap_decoy_file,True,1.0000,1.0,1.0,1.0,1.0,none,12499,0.001057,"pi,code_agent,trap,decoy_file"
+pi_trap_false_premise,False,0.5500,0.0,1.0,1.0,1.0,workspace_diff,17420,0.000844,"pi,code_agent,trap,false_premise"
