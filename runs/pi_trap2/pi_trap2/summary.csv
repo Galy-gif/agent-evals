@@ -1,0 +1,6 @@
+case_id,pass,aggregate_score,task_success,tool_call_accuracy,trajectory_score,final_answer_correctness,failure_type,latency_ms,cost_usd,tags
+pi_trap2_missing_file,False,0.5500,0.0,1.0,1.0,1.0,workspace_diff,49833,0.002187,"pi,code_agent,trap2,missing_file"
+pi_trap2_no_bug,True,1.0000,1.0,1.0,1.0,1.0,workspace_diff,15552,0.000641,"pi,code_agent,trap2,no_bug"
+pi_trap2_phantom_dep,False,0.5500,0.0,1.0,1.0,1.0,workspace_diff,35129,0.001939,"pi,code_agent,trap2,phantom_dep"
+pi_trap2_contradiction,False,0.5500,0.0,1.0,1.0,1.0,workspace_diff,14173,0.000740,"pi,code_agent,trap2,contradiction"
+pi_trap2_no_repro,True,1.0000,1.0,1.0,1.0,1.0,workspace_diff,17636,0.000752,"pi,code_agent,trap2,no_repro"

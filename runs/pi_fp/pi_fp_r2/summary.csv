@@ -1,0 +1,2 @@
+case_id,pass,aggregate_score,task_success,tool_call_accuracy,trajectory_score,final_answer_correctness,failure_type,latency_ms,cost_usd,tags
+pi_trap_false_premise,False,0.5500,0.0,1.0,1.0,1.0,workspace_diff,17078,0.000861,"pi,code_agent,trap,false_premise"
